@@ -1,42 +1,37 @@
+import dotenv from 'dotenv';
 import userModel from "../models/userModel.js";
 import { createTokens } from "../utils/create-token.js";
 import { Cypher, Decypher } from "../utils/cypher-decypher.js";
+import CryptoJS from "crypto-js";
+
+dotenv.config();
+
+const secretKey = process.env.ENCRYPTING_SECRET_KEY;
 
 export const register = async (req, res) => {
   try {
-    const { username, password, email } = req.body;
+    const { username, password: encryptedPassword, email } = req.body;
 
     if (!username) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Username is mandatory" });
+      return res.status(400).json({ success: false, message: "Username is mandatory" });
     }
-    if (!password) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Password is mandatory" });
+    if (!encryptedPassword) {
+      return res.status(400).json({ success: false, message: "Password is mandatory" });
     }
 
-    const findUser = await userModel.findOne({
-      username,
-      email,
-    });
+    
+    const bytes = CryptoJS.AES.decrypt(encryptedPassword, secretKey);
+    const password = bytes.toString(CryptoJS.enc.Utf8);
+
+    const findUser = await userModel.findOne({ username, email });
 
     if (findUser) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User already exist" });
+      return res.status(400).json({ success: false, message: "User already exists" });
     }
 
-    const newUser = await userModel.create({
-      username,
-      password: Cypher(password),
-      email,
-    });
+    const newUser = await userModel.create({ username, password: Cypher(password), email });
 
-    const { accessToken, refreshToken } = createTokens({
-      id: newUser._id,
-    });
+    const { accessToken, refreshToken } = createTokens({ id: newUser._id });
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: false,
@@ -47,7 +42,7 @@ export const register = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: false, 
       sameSite: "strict",
       path: "/",
       maxAge: 1000 * 60 * 60 * 24 * 365,
@@ -55,7 +50,7 @@ export const register = async (req, res) => {
 
     const { password: userPassword, ...userData } = newUser._doc;
 
-    res.status(200).json({success:true,userData});
+    res.status(200).json({ success: true, userData });
   } catch (error) {
     console.log("error: ", error);
     res.status(400).json(error);
@@ -64,41 +59,33 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password: encryptedPassword } = req.body;
 
     if (!username) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Error! invalid username" });
+      return res.status(400).json({ success: false, message: "Error! Invalid username" });
     }
-    if (!password) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Error! invalid password" });
+    if (!encryptedPassword) {
+      return res.status(400).json({ success: false, message: "Error! Invalid password" });
     }
 
-    const findUser = await userModel.findOne({
-      username,
-    });
+    
+    const bytes = CryptoJS.AES.decrypt(encryptedPassword, secretKey);
+    const password = bytes.toString(CryptoJS.enc.Utf8);
+
+    const findUser = await userModel.findOne({ username });
 
     if (!findUser) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found, kindly register" });
+      return res.status(400).json({ success: false, message: "User not found, kindly register" });
     }
 
     if (!Decypher(password, findUser.password)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Error! invalid password" });
+      return res.status(400).json({ success: false, message: "Error! Invalid password" });
     }
 
-    const { accessToken, refreshToken } = createTokens({
-      id: findUser._id,
-    });
+    const { accessToken, refreshToken } = createTokens({ id: findUser._id });
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: false,
+      secure: false, 
       sameSite: "strict",
       path: "/",
       maxAge: 1000 * 60 * 2,
@@ -106,16 +93,16 @@ export const login = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: false, 
       sameSite: "strict",
       path: "/",
       maxAge: 1000 * 60 * 60 * 24 * 365,
     });
-    
 
     res.status(200).json({ success: true, user: findUser });
   } catch (error) {
     console.log("error: ", error);
+    res.status(400).json(error);
   }
 };
 
@@ -126,7 +113,7 @@ export const logout = async (req, res) => {
       res.clearCookie(cookie);
     });
 
-    res.status(200).json({ success: true, message: "Logged out successfull" });
+    res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (error) {
     console.log("error: ", error);
     res.status(400).json(error);

@@ -5,7 +5,7 @@ import morgan from "morgan";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import userRoutes from "./routes/userRoutes.js"; // Corrected import path
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 
