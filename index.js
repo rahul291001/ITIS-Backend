@@ -6,13 +6,51 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import userRoutes from "./routes/userRoutes.js"; // Corrected import path
+import https from "https";
+import fs from "fs";
+import sqlite3 from "sqlite3";
+
+// open the database
+let dbsql = new sqlite3.Database('./Library.db', sqlite3.OPEN_READWRITE, (err) => {
+  if (err) {
+    console.error(err.message);
+  }
+  console.log('Connected to the chinook database.');
+});
+
+dbsql.serialize(() => {
+  dbsql.each(`SELECT *
+           FROM book`, (err, row) => {
+    if (err) {
+      console.error(err.message);
+    }
+    // console.log(row.TITLE + "\t" + row.YEAR);
+  });
+});
+
+
+dbsql.close((err) => {
+  if (err) {
+    console.error(err.message);
+  }
+  console.log('Close the database connection.');
+});
+
+
 
 dotenv.config();
 
 const app = express();
+var key = fs.readFileSync('./cert/selfsigned.key');
+var cert = fs.readFileSync('./cert/selfsigned.cr');
+var options = {
+  key: key,
+  cert: cert
+};
+
 
 app.use(cors({
-  origin: ["http://localhost:3000"],
+  origin: ["https://localhost:3000"],
   credentials: true,
 }));
 
@@ -31,6 +69,17 @@ mongoose
     console.log("Error occurred: ", error);
   });
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server started on port ${process.env.PORT}`);
+
+var server = https.createServer(options, app);
+
+server.listen(process.env.PORT, () => {
+  console.log("server starting on port : " + process.env.PORT)
 });
+
+// app.listen(process.env.PORT, () => {
+//   console.log(`Server started on port ${process.env.PORT}`);
+// });
+
+// app.listen(process.env.PORT, () => {
+//   console.log(`Server started on port ${process.env.PORT}`);
+// });
