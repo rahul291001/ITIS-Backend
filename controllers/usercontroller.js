@@ -19,7 +19,6 @@ export const register = async (req, res) => {
       return res.status(400).json({ success: false, message: "Password is mandatory" });
     }
 
-    
     const bytes = CryptoJS.AES.decrypt(encryptedPassword, secretKey);
     const password = bytes.toString(CryptoJS.enc.Utf8);
 
@@ -34,7 +33,7 @@ export const register = async (req, res) => {
     const { accessToken, refreshToken } = createTokens({ id: newUser._id });
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production', // Use secure only in production
       sameSite: "strict",
       path: "/",
       maxAge: 1000 * 60 * 2,
@@ -42,7 +41,7 @@ export const register = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false, 
+      secure: process.env.NODE_ENV === 'production', // Use secure only in production
       sameSite: "strict",
       path: "/",
       maxAge: 1000 * 60 * 60 * 24 * 365,
@@ -68,7 +67,6 @@ export const login = async (req, res) => {
       return res.status(400).json({ success: false, message: "Error! Invalid password" });
     }
 
-    
     const bytes = CryptoJS.AES.decrypt(encryptedPassword, secretKey);
     const password = bytes.toString(CryptoJS.enc.Utf8);
 
@@ -85,7 +83,7 @@ export const login = async (req, res) => {
     const { accessToken, refreshToken } = createTokens({ id: findUser._id });
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: false, 
+      secure: process.env.NODE_ENV === 'production', // Use secure only in production
       sameSite: "strict",
       path: "/",
       maxAge: 1000 * 60 * 2,
@@ -93,7 +91,7 @@ export const login = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false, 
+      secure: process.env.NODE_ENV === 'production', // Use secure only in production
       sameSite: "strict",
       path: "/",
       maxAge: 1000 * 60 * 60 * 24 * 365,
@@ -106,16 +104,22 @@ export const login = async (req, res) => {
   }
 };
 
-export const logout = async (req, res) => {
+export const logout = async (req, res) =>{
   try {
     const cookiesToClear = ["accessToken", "refreshToken"];
     cookiesToClear.forEach((cookie) => {
-      res.clearCookie(cookie);
+      res.clearCookie(cookie, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: "strict",
+        path: "/",
+      });
+      console.log(`Cleared cookie: ${cookie}`);
     });
 
     res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (error) {
     console.log("error: ", error);
-    res.status(400).json(error);
+    res.status(400).json({ success: false, error });
   }
 };
