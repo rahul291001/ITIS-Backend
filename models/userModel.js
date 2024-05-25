@@ -16,7 +16,12 @@ const userSchema = mongoose.Schema(
       required: true,
       unique: true,
     },
-    
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordExpires: {
+      type: Date,
+    },
     isAdmin: {
       type: Boolean,
       default: false,
@@ -28,6 +33,3 @@ const userSchema = mongoose.Schema(
 );
 
 export default mongoose.model("User", userSchema);
-
-
-// const projectSchema =
