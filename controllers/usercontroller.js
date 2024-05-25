@@ -67,6 +67,26 @@ export const register = async (req, res) => {
   }
 };
 
+export const getUserById = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+   
+    const user = await userModel.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Return the user data
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+
 export const login = async (req, res) => {
   try {
     const { username, password: encryptedPassword } = req.body;
@@ -114,6 +134,7 @@ export const login = async (req, res) => {
     res.status(400).json(error);
   }
 };
+
 
 export const logout = async (req, res) =>{
   try {
@@ -216,5 +237,47 @@ export const resetPassword = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+export const getAllUsers = async (req, res) => {
+  try {
+    // Retrieve all users from the database
+    const users = await userModel.find();
+
+    // Return the list of users
+    res.status(200).json({ success: true, users });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const updateUserIsAdminStatus = async (req, res) => {
+  const userId = req.params.userId;
+
+  // Check if user ID is present
+  if (!userId) {
+    return res.status(400).json({ message: 'Missing user ID' });
+  }
+
+  try {
+    const user = await userModel.findById(userId); // Find user by ID
+
+    // Check if user exists
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update user's isAdmin status (assuming you have logic here)
+    user.isAdmin = !user.isAdmin;
+    await user.save();
+
+    // Success response
+    res.status(200).json({ message: 'User isAdmin status updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };

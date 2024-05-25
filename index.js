@@ -8,6 +8,7 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import userRoutes from "./routes/userRoutes.js";
+import bookRoutes from "./routes/bookRoutes.js";
 
 dotenv.config();
 
@@ -25,15 +26,14 @@ app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
 app.use("/api/user", userRoutes);
+app.use("/api/books", bookRoutes);
 
 // Serve static files from the React app
 const buildPath = path.join(__dirname, 'build');
 app.use(express.static(buildPath));
 
 // All other GET requests not handled before will return the React app
-app.get('*', (req, res) => {
-  res.sendFile(path.join(buildPath, 'index.html'));
-});
+
 
 mongoose
   .connect(process.env.DB_URI, { dbName: "J&J" })
