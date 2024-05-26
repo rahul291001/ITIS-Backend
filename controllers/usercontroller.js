@@ -11,6 +11,7 @@ import jwt from 'jsonwebtoken';
 
 import nodemailer from "nodemailer";
 
+
 dotenv.config();
 
 const secretKey = process.env.ENCRYPTING_SECRET_KEY;
@@ -181,9 +182,9 @@ export const forgotPassword = async (req, res) => {
       }
     });
 
-    // Create JWT payload with user ID and reset token
-    const payload = { id: user._id, token: resetToken };
-    const resetLink = `http://localhost:${process.env.PORT || 3000}/reset-password?token=${jwt.sign(payload, process.env.JWT_SECRET)}`;
+    // // Create JWT payload with user ID and reset token
+    // const payload = { id: user._id, token: resetToken };
+    const resetLink = `https://localhost:3000/reset?token=${resetToken}`;
 
     console.log(`Password reset link: ${resetLink}`);
     res.status(200).json({ success: true, message: 'Password reset link generated (check console for details)' });
@@ -213,7 +214,7 @@ export const forgotPassword = async (req, res) => {
 };
 
 export const resetPassword = async (req, res) => {
-  const { token, password: encryptedPassword } = req.body;
+  const { token:token, password: encryptedPassword } = req.body;
 
   try {
     const user = await userModel.findOne({
@@ -224,11 +225,11 @@ export const resetPassword = async (req, res) => {
     if (!user) {
       return res.status(400).json({ success: false, message: 'Invalid or expired reset token' });
     }
-
+    
     const bytes = CryptoJS.AES.decrypt(encryptedPassword, secretKey);
-    const password = bytes.toString(CryptoJS.enc.Utf8);
+    const passwords = bytes.toString(CryptoJS.enc.Utf8);
 
-    user.password = Cypher(password);
+    user.password = Cypher(passwords);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
