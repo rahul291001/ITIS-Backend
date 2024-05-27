@@ -7,8 +7,11 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import https from "https"
+import fs from "fs"
 import userRoutes from "./routes/userRoutes.js";
 import bookRoutes from "./routes/bookRoutes.js";
+
 
 dotenv.config();
 
@@ -16,8 +19,14 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const key = fs.readFileSync('./cert/selfsigned.key')
+const cert = fs.readFileSync('./cert/selfsigned.cr')
+const options ={
+  key:key,
+  cert:cert
+}
 app.use(cors({
-  origin: ["http://localhost:3000"],
+  origin: [`${process.env.BASE_URL}`],
   credentials: true,
 }));
 
@@ -44,6 +53,11 @@ mongoose
     console.log("Error occurred: ", error);
   });
 
-app.listen(process.env.PORT, () => {
+var server = https.createServer(options,app) 
+server.listen(process.env.PORT, () => {
   console.log(`Server started on port ${process.env.PORT}`);
 });
+
+// app.listen(process.env.PORT, () => {
+//   console.log(`Server started on port ${process.env.PORT}`);
+// });
