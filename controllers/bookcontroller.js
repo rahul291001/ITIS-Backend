@@ -4,6 +4,7 @@ import bookModel from "../models/booksModel.js";
 import sanitize from 'sanitize-filename';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -78,6 +79,7 @@ export const downloadFile = async (req, res) => {
 export const deleteBook = async (req, res) => {
   try {
     const bookId = req.params.id;
+    console.log("Book ID",bookId)
     const book = await bookModel.findById(bookId);
     if (!book) {
       return res.status(404).json({ message: 'Book not found' });
